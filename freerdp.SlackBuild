@@ -19,14 +19,15 @@
 #
 # Visit SlackPack at http://sotirov-bg.net/slackpack/
 #
-# $Id: freerdp.SlackBuild,v 1.1 2016/09/20 13:25:35 gsotirov Exp $
+# $Id: freerdp.SlackBuild,v 1.2 2016/09/20 14:11:43 gsotirov Exp $
 #
 
 . ../../slack-package.conf
 
 NAME=FreeRDP
 PNAME=$(echo $NAME | tr '[:upper:]' '[:lower:]')
-VERSION=1.0.2
+VERSION='1.2.0-beta1-android9'
+PVERSION=$(echo $VERSION | tr '-' '.')
 ARCH=${ARCH:-i486}
 BUILD=${BUILD:-1}
 
@@ -77,14 +78,14 @@ cd ..
 # Prepare
 bin_perms $PKG
 ( cd $PKG; strip_bin; strip_lib )
-( cd $SRC; create_docs $PKG ${PNAME}-${VERSION} )
+( cd $SRC; create_docs $PKG ${PNAME}-${PVERSION} )
 gzip_man $PKG
 
 mkdir -p $PKG/install
 install -m 644 $CWD/slack-desc     $PKG/install/slack-desc
 install -m 644 $CWD/slack-required $PKG/install/slack-required
 
-SBDIR=$PKG/usr/src/slackbuilds/${NAME}-${VERSION}
+SBDIR=$PKG/usr/src/slackbuilds/${NAME}-${PVERSION}
 mkdir -p $SBDIR
 install -m 644 $CWD/slack-desc          $SBDIR/slack-desc
 install -m 644 $CWD/slack-required      $SBDIR/slack-required
@@ -92,7 +93,7 @@ install -m 644 $CWD/${PNAME}.SlackBuild $SBDIR/${PNAME}.SlackBuild
 
 # Assemble
 cd $PKG
-PKGNAME=${PNAME}-${VERSION}-${ARCH}-${BUILD}${MYIN}
+PKGNAME=${PNAME}-${PVERSION}-${ARCH}-${BUILD}${MYIN}
 makepkg -l y -c n $PKG_DIR/${PKGNAME}.txz
 cd $PKG_DIR
 md5sum ${PKGNAME}.txz > ${PKGNAME}.txz.md5
