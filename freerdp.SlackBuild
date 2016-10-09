@@ -19,7 +19,7 @@
 #
 # Visit SlackPack at http://sotirov-bg.net/slackpack/
 #
-# $Id: freerdp.SlackBuild,v 1.2 2016/09/20 14:11:43 gsotirov Exp $
+# $Id: freerdp.SlackBuild,v 1.3 2016/10/09 07:51:31 gsotirov Exp $
 #
 
 . ../../slack-package.conf
@@ -28,7 +28,7 @@ NAME=FreeRDP
 PNAME=$(echo $NAME | tr '[:upper:]' '[:lower:]')
 VERSION='1.2.0-beta1-android9'
 PVERSION=$(echo $VERSION | tr '-' '.')
-ARCH=${ARCH:-i486}
+ARCH=${ARCH:-i586}
 BUILD=${BUILD:-1}
 
 TMP=${TMP:-/tmp}
@@ -57,6 +57,11 @@ tar -xvf $CWD/${NAME}-${VERSION}.tar.?z* || exit 3
 cd $SRC
 fix_source
 
+# Apply patch (if any)
+if [ -e $CWD/${PNAME}-${VERSION}.diff ]; then
+  patch -p1 -b -z.orig < $CWD/${PNAME}-${VERSION}.diff || exit 4
+fi
+
 # Configure, build & install
 mkdir build; cd build
 cmake -LAH \
@@ -67,18 +72,22 @@ cmake -LAH \
       -DLIB_SUFFIX=lib${LIBDIRSUFFIX} \
       -DWITH_CUPS=ON \
       -DWITH_FFMPEG=ON \
+      -DWITH_GSTREAMER_0_10=ON \
+      -DWITH_GSTREAMER_1_0=OFF \
       -DCMAKE_VERBOSE_MAKEFILE=TRUE \
       .. || exit 5
+# Build with GStreamer 1.x fails due to missing headers
 make VERBOSE=1 -j || exit 6
 make DESTDIR=$PKG install || exit 7
 cd ..
 # Move man pages in the right place
-( cd $PKG; mv usr/share/man usr/man )
+( cd $PKG; mv usr/share/man usr/man; rmdir usr/share )
 
 # Prepare
 bin_perms $PKG
 ( cd $PKG; strip_bin; strip_lib )
 ( cd $SRC; create_docs $PKG ${PNAME}-${PVERSION} )
+( cd $PKG/usr/doc/${PNAME}-${VERSION}; mv LICENSE COPYING )
 gzip_man $PKG
 
 mkdir -p $PKG/install
@@ -89,6 +98,9 @@ SBDIR=$PKG/usr/src/slackbuilds/${NAME}-${PVERSION}
 mkdir -p $SBDIR
 install -m 644 $CWD/slack-desc          $SBDIR/slack-desc
 install -m 644 $CWD/slack-required      $SBDIR/slack-required
+if [ -e $CWD/${PNAME}-${VERSION}.diff ]; then
+  install -m 644 $CWD/${PNAME}-${VERSION}.diff $SBDIR/${PNAME}-${VERSION}.diff
+fi
 install -m 644 $CWD/${PNAME}.SlackBuild $SBDIR/${PNAME}.SlackBuild
 
 # Assemble
