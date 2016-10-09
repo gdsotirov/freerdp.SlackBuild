@@ -1,0 +1,135 @@
+# Patch to fix cmake 3.1 and ffmpeg 3.x compatibility
+# See https://github.com/FreeRDP/FreeRDP/commit/1b663ceffe51008af7ae9749e5b7999b2f7d6698?diff=unified
+diff -urNad FreeRDP-1.2.0-beta1-android9-orig/channels/CMakeLists.txt FreeRDP-1.2.0-beta1-android9/channels/CMakeLists.txt
+--- FreeRDP-1.2.0-beta1-android9-orig/channels/CMakeLists.txt	2014-09-12 01:46:32.000000000 +0300
++++ FreeRDP-1.2.0-beta1-android9/channels/CMakeLists.txt	2016-10-09 10:15:24.000000000 +0300
+@@ -202,8 +202,8 @@
+ file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+ 
+ foreach(FILEPATH ${FILEPATHS})
+-	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
+-		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" DIR ${FILEPATH})
++	if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")
++		string(REGEX REPLACE "^([^/]*)/+${FILENAME}" "\\1" DIR ${FILEPATH})
+ 		set(CHANNEL_OPTION)
+ 		include(${FILEPATH})
+ 		if(${CHANNEL_OPTION})
+diff -urNad FreeRDP-1.2.0-beta1-android9-orig/channels/client/CMakeLists.txt FreeRDP-1.2.0-beta1-android9/channels/client/CMakeLists.txt
+--- FreeRDP-1.2.0-beta1-android9-orig/channels/client/CMakeLists.txt	2014-09-12 01:46:32.000000000 +0300
++++ FreeRDP-1.2.0-beta1-android9/channels/client/CMakeLists.txt	2016-10-09 10:15:24.000000000 +0300
+@@ -24,7 +24,9 @@
+ 	${CMAKE_CURRENT_SOURCE_DIR}/addin.c
+ 	${CMAKE_CURRENT_SOURCE_DIR}/addin.h)
+ 
++if(CHANNEL_STATIC_CLIENT_ENTRIES)
+ list(REMOVE_DUPLICATES CHANNEL_STATIC_CLIENT_ENTRIES)
++endif()
+ 
+ foreach(STATIC_ENTRY ${CHANNEL_STATIC_CLIENT_ENTRIES})
+ 	foreach(STATIC_MODULE ${CHANNEL_STATIC_CLIENT_MODULES})
+diff -urNad FreeRDP-1.2.0-beta1-android9-orig/client/CMakeLists.txt FreeRDP-1.2.0-beta1-android9/client/CMakeLists.txt
+--- FreeRDP-1.2.0-beta1-android9-orig/client/CMakeLists.txt	2014-09-12 01:46:32.000000000 +0300
++++ FreeRDP-1.2.0-beta1-android9/client/CMakeLists.txt	2016-10-09 10:15:24.000000000 +0300
+@@ -59,8 +59,8 @@
+ file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+ 
+ foreach(FILEPATH ${FILEPATHS})
+-	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
+-		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" FREERDP_CLIENT ${FILEPATH})
++	if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")
++		string(REGEX REPLACE "^([^/]*)/+${FILENAME}" "\\1" FREERDP_CLIENT ${FILEPATH})
+ 		set(FREERDP_CLIENT_ENABLED 0)
+ 		include(${FILEPATH})
+ 		if(FREERDP_CLIENT_ENABLED)
+diff -urNad FreeRDP-1.2.0-beta1-android9-orig/server/CMakeLists.txt FreeRDP-1.2.0-beta1-android9/server/CMakeLists.txt
+--- FreeRDP-1.2.0-beta1-android9-orig/server/CMakeLists.txt	2014-09-12 01:46:32.000000000 +0300
++++ FreeRDP-1.2.0-beta1-android9/server/CMakeLists.txt	2016-10-09 10:15:24.000000000 +0300
+@@ -44,8 +44,8 @@
+ file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+ 
+ foreach(FILEPATH ${FILEPATHS})
+-	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
+-		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" FREERDP_SERVER ${FILEPATH})
++	if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")
++		string(REGEX REPLACE "^([^/]*)/+${FILENAME}" "\\1" FREERDP_SERVER ${FILEPATH})
+ 		set(FREERDP_SERVER_ENABLED 0)
+ 		include(${FILEPATH})
+ 		if(FREERDP_SERVER_ENABLED)
+diff -urNad FreeRDP-1.2.0-beta1-android9-orig/third-party/CMakeLists.txt FreeRDP-1.2.0-beta1-android9/third-party/CMakeLists.txt
+--- FreeRDP-1.2.0-beta1-android9-orig/third-party/CMakeLists.txt	2014-09-12 01:46:32.000000000 +0300
++++ FreeRDP-1.2.0-beta1-android9/third-party/CMakeLists.txt	2016-10-09 10:15:24.000000000 +0300
+@@ -22,11 +22,11 @@
+ file(GLOB all_valid_subdirs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/CMakeLists.txt")
+ 
+ foreach(dir ${all_valid_subdirs})
+-	if(${dir} MATCHES "^([^/]*)//CMakeLists.txt")
+-		string(REGEX REPLACE "^([^/]*)//CMakeLists.txt" "\\1" dir_trimmed ${dir})
++	if(${dir} MATCHES "^([^/]*)/+CMakeLists.txt")
++		string(REGEX REPLACE "^([^/]*)/+CMakeLists.txt" "\\1" dir_trimmed ${dir})
+ 		message(STATUS "Adding third-party component ${dir_trimmed}")
+ 		add_subdirectory(${dir_trimmed})
+ 	endif()
+ endforeach(dir)
+ 
+-set(THIRD_PARTY_INCLUDES ${THIRD_PARTY_INCLUDES} PARENT_SCOPE)
+\ No newline at end of file
++set(THIRD_PARTY_INCLUDES ${THIRD_PARTY_INCLUDES} PARENT_SCOPE)
+# See https://github.com/FreeRDP/FreeRDP/commit/b7b66968f93f6ce75dd06d12638e14029bf3717b
+diff -urNad FreeRDP-1.2.0-beta1-android9-orig/channels/tsmf/client/ffmpeg/tsmf_ffmpeg.c FreeRDP-1.2.0-beta1-android9/channels/tsmf/client/ffmpeg/tsmf_ffmpeg.c
+--- FreeRDP-1.2.0-beta1-android9-orig/channels/tsmf/client/ffmpeg/tsmf_ffmpeg.c	2014-09-12 01:46:32.000000000 +0300
++++ FreeRDP-1.2.0-beta1-android9/channels/tsmf/client/ffmpeg/tsmf_ffmpeg.c	2016-10-09 10:33:04.000000000 +0300
+@@ -62,6 +62,9 @@
+ #define AV_CODEC_ID_AC3 CODEC_ID_AC3
+ #endif
+ 
++#if LIBAVUTIL_VERSION_MAJOR < 52
++#define AV_PIX_FMT_YUV420P PIX_FMT_YUV420P
++#endif
+ 
+ typedef struct _TSMFFFmpegDecoder
+ {
+@@ -103,7 +106,11 @@
+ 	mdecoder->codec_context->bit_rate = media_type->BitRate;
+ 	mdecoder->codec_context->time_base.den = media_type->SamplesPerSecond.Numerator;
+ 	mdecoder->codec_context->time_base.num = media_type->SamplesPerSecond.Denominator;
++#if LIBAVCODEC_VERSION_MAJOR < 55
+ 	mdecoder->frame = avcodec_alloc_frame();
++#else
++	mdecoder->frame = av_frame_alloc();
++#endif
+ 	return TRUE;
+ }
+ 
+@@ -322,7 +329,11 @@
+ 									 mdecoder->codec_context->width, mdecoder->codec_context->height);
+ 			mdecoder->decoded_data = malloc(mdecoder->decoded_size);
+ 			ZeroMemory(mdecoder->decoded_data, mdecoder->decoded_size);
++#if LIBAVCODEC_VERSION_MAJOR < 55
+ 			frame = avcodec_alloc_frame();
++#else
++			frame = av_frame_alloc();
++#endif
+ 			avpicture_fill((AVPicture *) frame, mdecoder->decoded_data,
+ 						   mdecoder->codec_context->pix_fmt,
+ 						   mdecoder->codec_context->width, mdecoder->codec_context->height);
+@@ -385,7 +396,11 @@
+ 									(int16_t *) dst, &frame_size, src, src_size);
+ #else
+ 		{
++#if LIBAVCODEC_VERSION_MAJOR < 55
+ 			AVFrame *decoded_frame = avcodec_alloc_frame();
++#else
++			AVFrame *decoded_frame = av_frame_alloc();
++#endif
+ 			int got_frame = 0;
+ 			AVPacket pkt;
+ 			av_init_packet(&pkt);
+@@ -464,7 +479,7 @@
+ 	TSMFFFmpegDecoder *mdecoder = (TSMFFFmpegDecoder *) decoder;
+ 	switch(mdecoder->codec_context->pix_fmt)
+ 	{
+-		case PIX_FMT_YUV420P:
++		case AV_PIX_FMT_YUV420P:
+ 			return RDP_PIXFMT_I420;
+ 		default:
+ 			CLOG_ERR("unsupported pixel format %u",
